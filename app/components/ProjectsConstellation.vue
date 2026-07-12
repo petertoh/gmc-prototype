@@ -21,9 +21,11 @@ type NodeRelationship = {
   to: { _id: string; _type: string; slug: string; x: number; y: number } // _id of the target node
 }
 
-let CONTEXT: CanvasRenderingContext2D | null = null
-
 const data = inject<Ref<ProjectsNetworkQueryResult | null>>('projectsNetwork')
+
+const projectsConstellation = ref<HTMLDivElement | null>(null)
+const canvas = ref<HTMLCanvasElement | null>(null)
+let CONTEXT: CanvasRenderingContext2D | null = null
 
 // extract all GMC works
 const works = computed<
@@ -146,18 +148,11 @@ const activeRelationships = ref<NodeRelationship[]>([])
 
 const handleClickOnContainer = (event: Event) => {
   // check if the click was on the container itself and not on any node
-  const container = document.querySelector('.projects-constellation')
-  if (container && event.target === container) {
-    // click was on the container itself
-    console.log('Clicked on the container')
-    // reset active selections
-    activeCategories.value = []
-    activeProjects.value = []
-    activeWorks.value = []
-    activeRelatedWorks.value = []
-    activeYears.value = []
-    activeWorkForms.value = []
-    activeRelationships.value = []
+  if (
+    projectsConstellation.value &&
+    event.target === projectsConstellation.value
+  ) {
+    navigateTo({ query: {} })
   }
 }
 
@@ -165,25 +160,27 @@ onMounted(() => {
   setTimeout(async () => {
     initNodePositions()
     await initConstellation()
-    document
-      .querySelector('.projects-constellation')
-      ?.addEventListener('click', handleClickOnContainer)
+    projectsConstellation.value?.addEventListener(
+      'click',
+      handleClickOnContainer,
+    )
   }, 0)
 })
 onBeforeUnmount(() => {
-  document
-    .querySelector('.projects-constellation')
-    ?.removeEventListener('click', handleClickOnContainer)
+  projectsConstellation.value?.removeEventListener(
+    'click',
+    handleClickOnContainer,
+  )
 })
 
 watch(() => useRoute().query, filterActiveItems, { immediate: true })
 watch(activeRelationships, drawCanvas)
 
 function initNodePositions() {
-  const container = document.querySelector('.projects-constellation')
   const containerDimensions = { width: 0, height: 0 }
-  if (container) {
-    const { width, height } = container.getBoundingClientRect()
+  if (projectsConstellation.value) {
+    const { width, height } =
+      projectsConstellation.value.getBoundingClientRect()
     containerDimensions.width = width
     containerDimensions.height = height
   }
@@ -291,14 +288,8 @@ async function filterActiveItems(newQuery: {
   } else if (typeof newQuery.workForm === 'string') {
     filterByWorkForm(newQuery.workForm)
   } else {
-    activeCategories.value = []
-    activeProjects.value = []
-    activeWorks.value = []
-    activeRelatedWorks.value = []
-    activeYears.value = []
-    activeWorkForms.value = []
+    resetActiveSelections()
   }
-  await nextTick()
   updateActiveRelationships()
 }
 
@@ -315,26 +306,26 @@ function filterByCategory(categorySlug: string) {
       project.category?.some((cat) => cat.slug === categorySlug),
     ) || []
 
-  const worksToActivate =
-    projectsToActivate.flatMap((p) => p.works).filter((work) => !!work) || []
+  // const worksToActivate =
+  //   projectsToActivate.flatMap((p) => p.works).filter((work) => !!work) || []
 
-  const relatedWorksToActivate =
-    projectsToActivate.flatMap((project) => {
-      return [
-        ...(project?.related || []),
-        ...(project?.works?.flatMap((work) => work.related || []) || []),
-      ]
-    }) || []
+  // const relatedWorksToActivate =
+  //   projectsToActivate.flatMap((project) => {
+  //     return [
+  //       ...(project?.related || []),
+  //       ...(project?.works?.flatMap((work) => work.related || []) || []),
+  //     ]
+  //   }) || []
 
   const yearsToActivate = Array.from(
     new Set([
       ...projectsToActivate.flatMap(
         (project) => getWorkYears(project.dates) || [],
       ),
-      ...worksToActivate.flatMap((work) => getWorkYears(work.dates) || []),
-      ...relatedWorksToActivate.flatMap(
-        (work) => getWorkYears(work.dates) || [],
-      ),
+      // ...worksToActivate.flatMap((work) => getWorkYears(work.dates) || []),
+      // ...relatedWorksToActivate.flatMap(
+      //   (work) => getWorkYears(work.dates) || [],
+      // ),
     ]),
   )
 
@@ -342,20 +333,22 @@ function filterByCategory(categorySlug: string) {
     new Set(
       [
         ...(projectsToActivate.flatMap((p) => p.workForm || []).flat() || []),
-        ...worksToActivate.flatMap((work) => work.workForm || []),
-        ...relatedWorksToActivate.flatMap((work) => work.workForm || []),
+        // ...worksToActivate.flatMap((work) => work.workForm || []),
+        // ...relatedWorksToActivate.flatMap((work) => work.workForm || []),
       ].map((form) => form.slug),
     ),
   )
 
   // set state for all active nodes
   activeProjects.value = projectsToActivate.map((project) => project.slug)
-  activeWorks.value = worksToActivate
-    .map((work) => work?.slug || '')
-    .filter((slug) => slug)
-  activeRelatedWorks.value = relatedWorksToActivate
-    .map((work) => work?.slug || '')
-    .filter((slug) => slug)
+  // activeWorks.value = worksToActivate
+  //   .map((work) => work?.slug || '')
+  //   .filter((slug) => slug)
+  activeWorks.value = []
+  // activeRelatedWorks.value = relatedWorksToActivate
+  //   .map((work) => work?.slug || '')
+  //   .filter((slug) => slug)
+  activeRelatedWorks.value = []
   activeYears.value = yearsToActivate
   activeWorkForms.value = workFormsToActivate
 }
@@ -373,7 +366,7 @@ function filterByProject(projectSlug: string) {
 
   const relatedWorksToActivate = [
     ...(projectToActivate.related || []),
-    ...worksToActivate?.flatMap((work) => work.related || []),
+    // ...worksToActivate?.flatMap((work) => work.related || []),
   ]
 
   const yearsToActivate = Array.from(
@@ -421,18 +414,18 @@ function filterByWork(workSlug: string) {
   const yearsToActivate = Array.from(
     new Set([
       ...(getWorkYears(work.dates) || []),
-      ...(relatedWorksToActivate?.flatMap((w) =>
-        w?.dates ? getWorkYears(w.dates) : [],
-      ) || []),
+      // ...(relatedWorksToActivate?.flatMap((w) =>
+      //   w?.dates ? getWorkYears(w.dates) : [],
+      // ) || []),
     ]),
   )
 
   const workFormsToActivate = Array.from(
     new Set([
       ...(work.workForm?.map((form) => form.slug) || []),
-      ...(relatedWorksToActivate?.flatMap(
-        (w) => w.workForm?.map((form) => form.slug) || [],
-      ) || []),
+      // ...(relatedWorksToActivate?.flatMap(
+      //   (w) => w.workForm?.map((form) => form.slug) || [],
+      // ) || []),
     ]),
   )
 
@@ -601,30 +594,27 @@ function filterByWorkForm(workForm: string) {
 async function initConstellation() {
   setTimeout(async () => {
     // Create a canvas and draw lines connecting all [data-node] elements
-    const canvas = document.querySelector(
-      '.projects-constellation__canvas',
-    ) as HTMLCanvasElement
-    CONTEXT = canvas?.getContext('2d')
-    if (!CONTEXT) return
+    CONTEXT = canvas.value?.getContext('2d') || null
+    if (!canvas.value || !CONTEXT) return
 
-    const displayWidth = canvas.clientWidth
-    const displayHeight = canvas.clientHeight
+    const displayWidth = canvas.value.clientWidth
+    const displayHeight = canvas.value.clientHeight
 
     // Get the device pixel ratio
     const dpr = window.devicePixelRatio || 1
 
     // 1. Set the internal resolution multiplied by the DPR
-    canvas.width = displayWidth * dpr
-    canvas.height = displayHeight * dpr
+    canvas.value.width = displayWidth * dpr
+    canvas.value.height = displayHeight * dpr
 
     // 2. Set the CSS display size to your desired dimensions
-    canvas.style.width = `${displayWidth}px`
-    canvas.style.height = `${displayHeight}px`
+    canvas.value.style.width = `${displayWidth}px`
+    canvas.value.style.height = `${displayHeight}px`
 
     // 3. Scale the context so your drawing coordinates remain unchanged
     CONTEXT.scale(dpr, dpr)
 
-    const containerRect = canvas.getBoundingClientRect()
+    const containerRect = canvas.value.getBoundingClientRect()
     const nodes = Array.from(document.querySelectorAll('[data-node]'))
 
     const getNodeData = (node: Element) => {
@@ -735,20 +725,20 @@ async function initConstellation() {
         })
       }
     })
-
-    activeRelationships.value = relationships.value.filter((rel) => {
-      return (
-        activeCategories.value.includes(rel.from.slug) ||
-        activeProjects.value.includes(rel.from.slug) ||
-        activeWorks.value.includes(rel.from.slug) ||
-        activeRelatedWorks.value.includes(rel.from.slug) ||
-        activeYears.value.includes(parseInt(rel.from.slug)) ||
-        activeWorkForms.value.includes(rel.from.slug)
-      )
-    })
-    await nextTick()
-    drawCanvas()
+    updateActiveRelationships()
   }, 1000)
+}
+
+function resetActiveSelections() {
+  activeCategories.value = [
+    ...(data?.value?.categories?.map((cat) => cat.slug) || []),
+  ]
+  activeProjects.value = []
+  activeWorks.value = []
+  activeRelatedWorks.value = []
+  activeYears.value = []
+  activeWorkForms.value = []
+  activeRelationships.value = []
 }
 
 function updateActiveRelationships() {
@@ -884,9 +874,11 @@ function updateActiveRelationships() {
 
 function drawCanvas() {
   if (!CONTEXT) return
-  const containerRect = document
-    .querySelector('.projects-constellation__canvas')
-    ?.getBoundingClientRect() || { width: 0, height: 0 }
+  const containerRect = canvas.value?.getBoundingClientRect() || {
+    width: 0,
+    height: 0,
+  }
+
   CONTEXT.clearRect(0, 0, containerRect.width, containerRect.height)
 
   CONTEXT.lineWidth = 3
@@ -952,16 +944,13 @@ function drawCanvas() {
       CONTEXT.closePath()
     }
   })
-
-  // if (CONTEXT) {
-  //   CONTEXT.stroke()
-  // }
 }
 </script>
 
 <template>
-  <div class="projects-constellation">
-    <canvas class="projects-constellation__canvas"></canvas>
+  <div class="projects-constellation" ref="projectsConstellation">
+    <canvas class="projects-constellation__canvas" ref="canvas"></canvas>
+
     <nav v-if="data?.categories?.length">
       <div
         v-for="(category, index) in data.categories"
