@@ -5,9 +5,7 @@
     :class="[
       `node--${nodeType}`,
       {
-        't-label': !['category', 'project', 'work', 'relatedProject'].includes(
-          nodeType,
-        ),
+        't-label': !['category', 'project', 'work', 'year'].includes(nodeType),
       },
     ]"
   >
@@ -40,9 +38,9 @@ const props = defineProps<{
   color: white;
 }
 .node--project {
-  background-color: #525252;
+  background-color: #4c4c4c;
   color: white;
-  border-color: black;
+  border-color: #4c4c4c;
 }
 .node--work {
   background-color: #d2d2d2;
@@ -52,14 +50,17 @@ const props = defineProps<{
 }
 .node--year {
   background-color: #e8e8e8;
+  border-radius: 0.5em;
 }
 
 .node--workForm {
   background-color: #ececec;
-  border-color: rgb(201, 201, 201);
+  border-color: #ececec;
+  border-radius: 0.5em;
 }
 .node--workMedium {
   color: rgb(119, 119, 119);
-  border-color: rgb(199, 199, 199);
+  border-color: rgb(119, 119, 119);
+  border-radius: 0.5em;
 }
 </style>

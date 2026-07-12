@@ -144,11 +144,36 @@ const activeWorkForms = ref<string[]>([]) // slugs
 const relationships = ref<NodeRelationship[]>([])
 const activeRelationships = ref<NodeRelationship[]>([])
 
+const handleClickOnContainer = (event: Event) => {
+  // check if the click was on the container itself and not on any node
+  const container = document.querySelector('.projects-constellation')
+  if (container && event.target === container) {
+    // click was on the container itself
+    console.log('Clicked on the container')
+    // reset active selections
+    activeCategories.value = []
+    activeProjects.value = []
+    activeWorks.value = []
+    activeRelatedWorks.value = []
+    activeYears.value = []
+    activeWorkForms.value = []
+    activeRelationships.value = []
+  }
+}
+
 onMounted(() => {
   setTimeout(async () => {
     initNodePositions()
     await initConstellation()
+    document
+      .querySelector('.projects-constellation')
+      ?.addEventListener('click', handleClickOnContainer)
   }, 0)
+})
+onBeforeUnmount(() => {
+  document
+    .querySelector('.projects-constellation')
+    ?.removeEventListener('click', handleClickOnContainer)
 })
 
 watch(() => useRoute().query, filterActiveItems, { immediate: true })
@@ -599,9 +624,6 @@ async function initConstellation() {
     // 3. Scale the context so your drawing coordinates remain unchanged
     CONTEXT.scale(dpr, dpr)
 
-    CONTEXT.lineWidth = 2
-    CONTEXT.strokeStyle = '#000'
-
     const containerRect = canvas.getBoundingClientRect()
     const nodes = Array.from(document.querySelectorAll('[data-node]'))
 
@@ -644,7 +666,6 @@ async function initConstellation() {
 
     nodes.forEach((node) => {
       const { data: nodeData, x, y } = getNodeData(node)
-      console.log('node position: ', { x, y }, 'node type', nodeData._type)
 
       if (nodeData._type === 'category') {
         const targetNodes = nodes.filter((n) => {
@@ -862,61 +883,79 @@ function updateActiveRelationships() {
 }
 
 function drawCanvas() {
-  console.log(
-    'Drawing canvas with active relationships:',
-    activeRelationships.value,
-  )
   if (!CONTEXT) return
   const containerRect = document
     .querySelector('.projects-constellation__canvas')
     ?.getBoundingClientRect() || { width: 0, height: 0 }
   CONTEXT.clearRect(0, 0, containerRect.width, containerRect.height)
+
+  CONTEXT.lineWidth = 3
+  CONTEXT.strokeStyle = '#aeaeff'
+
   activeRelationships.value.reverse().forEach((relationship) => {
     CONTEXT?.beginPath()
     CONTEXT?.moveTo(relationship.from.x, relationship.from.y)
     CONTEXT?.lineTo(relationship.to.x, relationship.to.y)
-    // create a smooth arc to connect the points
-    // const midX = (relationship.from.x + relationship.to.x) / 2
-    // const midY = (relationship.from.y + relationship.to.y) / 2
-    // CONTEXT?.quadraticCurveTo(containerRect.width / 2, containerRect.height / 2, relationship.to.x, relationship.to.y)
-
-    // CONTEXT?.arcTo(
-    //   relationship.from.x,
-    //   relationship.from.y,
+    // CONTEXT?.quadraticCurveTo(
+    //   Math.min(
+    //     Math.max(
+    //       relationship.from.x > relationship.to.x
+    //         ? relationship.from.y > relationship.to.y
+    //           ? relationship.from.x -
+    //             (relationship.from.x - relationship.to.x) / 2
+    //           : relationship.from.x +
+    //             (relationship.to.x - relationship.from.x) / 2
+    //         : relationship.from.y > relationship.to.y
+    //           ? relationship.from.x -
+    //             (relationship.from.x - relationship.to.x) / 2
+    //           : relationship.from.x +
+    //             (relationship.to.x - relationship.from.x) / 2,
+    //       0,
+    //     ),
+    //     containerRect.width,
+    //   ),
+    //   Math.max(
+    //     Math.min(
+    //       relationship.from.y > relationship.to.y
+    //         ? relationship.from.x < relationship.to.x
+    //           ? relationship.from.y +
+    //             (relationship.from.y - relationship.to.y) / 2
+    //           : relationship.from.y -
+    //             (relationship.from.y - relationship.to.y) / 2
+    //         : relationship.from.x < relationship.to.x
+    //           ? relationship.from.y -
+    //             (relationship.to.y - relationship.from.y) / 2
+    //           : relationship.from.y +
+    //             (relationship.to.y - relationship.from.y) / 2,
+    //       containerRect.height,
+    //     ),
+    //     0,
+    //   ),
     //   relationship.to.x,
     //   relationship.to.y,
-    //   50,
     // )
-
-    const gradient = CONTEXT?.createLinearGradient(
-      relationship.from.x,
-      relationship.from.y,
-      relationship.to.x,
-      relationship.to.y,
-    )
-
-    const colorKeys = {
-      category: '#aa0000',
-      project: '#00aa00',
-      work: '#0000aa',
-      relatedProject: '#aaaa00',
-      workForm: '#00aaaa',
-      year: '#aaaaaa',
-    }
-
-    gradient?.addColorStop(0, 'black') // From color (starts at 50, 50)
-    gradient?.addColorStop(1, 'black') // To color (ends at 250, 200)
     if (CONTEXT) {
-      // CONTEXT.strokeStyle = gradient || 'black'
-      CONTEXT.strokeStyle = 'black'
+      if (relationship.to._type === 'relatedProject') {
+        CONTEXT.lineWidth = 2
+        CONTEXT.setLineDash([8, 2])
+      } else if (
+        relationship.to._type === 'workForm' ||
+        relationship.to._type === 'year'
+      ) {
+        CONTEXT.lineWidth = 2
+        CONTEXT.setLineDash([2, 4])
+      } else {
+        CONTEXT.lineWidth = 3
+        CONTEXT.setLineDash([])
+      }
       CONTEXT.stroke()
       CONTEXT.closePath()
     }
   })
 
-  if (CONTEXT) {
-    CONTEXT.stroke()
-  }
+  // if (CONTEXT) {
+  //   CONTEXT.stroke()
+  // }
 }
 </script>
 
@@ -1099,7 +1138,7 @@ function drawCanvas() {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.2;
+  opacity: 0.6;
 }
 
 .projects-constellation__node-container {
