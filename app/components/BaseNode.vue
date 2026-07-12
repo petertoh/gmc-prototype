@@ -27,7 +27,8 @@ const props = defineProps<{
   display: inline-block;
   color: black;
   white-space: nowrap;
-  &:hover {
+  &:hover,
+  .node-selected & {
     background-color: blue;
     color: white;
     border-color: blue;
@@ -35,25 +36,26 @@ const props = defineProps<{
 }
 .node--category {
   background-color: black;
+  border-color: black;
   color: white;
 }
 .node--project {
-  background-color: rgb(82, 82, 82);
+  background-color: #525252;
   color: white;
   border-color: black;
 }
 .node--work {
-  background-color: rgb(210, 210, 210);
+  background-color: #d2d2d2;
 }
 .node--relatedProject {
   background-color: white;
 }
 .node--year {
-  background-color: rgb(232, 232, 232);
+  background-color: #e8e8e8;
 }
 
 .node--workForm {
-  background-color: rgb(236, 236, 236);
+  background-color: #ececec;
   border-color: rgb(201, 201, 201);
 }
 .node--workMedium {

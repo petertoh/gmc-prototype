@@ -6,7 +6,7 @@ const view = computed(() => route.query.view as string)
 <template>
   <div>
     <header>
-      <h1>GMC Prototype</h1>
+      <!-- <h1>GMC Prototype</h1> -->
       <nav>
         <NuxtLink to="?view=tree">Tree</NuxtLink>
         <NuxtLink to="?view=constellation">Constellation</NuxtLink>
@@ -21,7 +21,7 @@ const view = computed(() => route.query.view as string)
 <style scoped>
 header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 nav {
