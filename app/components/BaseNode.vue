@@ -43,10 +43,11 @@ const props = defineProps<{
   border-color: #4c4c4c;
 }
 .node--work {
-  background-color: #d2d2d2;
+  background-color: rgb(247, 247, 255);
 }
 .node--relatedProject {
-  background-color: white;
+  background-color: #ffe7e7;
+  border-color: #ffe7e7;
 }
 .node--year {
   background-color: #e8e8e8;
