@@ -133,6 +133,11 @@ watch(
   overflow-x: auto;
   position: relative;
   flex: 1;
+  /* hide scrollbar */
+  scrollbar-width: none; /* For Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+  }
   &:after {
     content: '';
     position: absolute;
