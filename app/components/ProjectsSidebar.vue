@@ -335,9 +335,10 @@ const currentRelatedWorks = computed(() => {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: black;
+    background-color: white;
+    border: 1px solid black;
     z-index: 1;
-    animation: fade-reveal 0.3s ease 0.125s forwards;
+    animation: fade-reveal 0.1s ease 0.1s forwards;
   }
 }
 .projects-sidebar__description {
@@ -352,9 +353,10 @@ const currentRelatedWorks = computed(() => {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: black;
+    background-color: white;
+    border: 1px solid black;
     z-index: 1;
-    animation: fade-reveal 0.3s ease 0.25s forwards;
+    animation: fade-reveal 0.1s ease 0.2s forwards;
   }
 }
 section {
@@ -369,9 +371,11 @@ section {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: black;
+    background-color: white;
+    border: 1px solid black;
+    border-top: none;
     z-index: 1;
-    animation: fade-reveal 0.3s ease 1s forwards;
+    animation: fade-reveal 0.1s ease 0.3s forwards;
   }
 }
 ul {

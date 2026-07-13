@@ -55,9 +55,10 @@ const aspectRatio = computed(() => {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: black;
+    background-color: white;
+    border: 1px solid black;
     z-index: 1;
-    animation: fade-reveal 0.3s ease 0.5s forwards;
+    animation: fade-reveal 0.1s ease 0.2s forwards;
   }
 }
 
