@@ -3,6 +3,5 @@
 </script>
 
 <template>
-  <div></div>
-  <!-- <ProjectsTree v-if="data" :data="data" /> -->
+  <ProjectsTree />
 </template>

@@ -51,17 +51,22 @@ const props = defineProps<{
 }
 .node--year {
   background-color: #e8e8e8;
-  border-radius: 0.5em;
+  border-color: #e8e8e8;
+  /* border-radius: 0.5em; */
 }
 
 .node--workForm {
   background-color: #ececec;
   border-color: #ececec;
-  border-radius: 0.5em;
+  /* border-radius: 0.5em; */
 }
 .node--workMedium {
   color: rgb(119, 119, 119);
   border-color: rgb(119, 119, 119);
-  border-radius: 0.5em;
+  /* border-radius: 0.5em; */
+}
+.node--artist {
+  background-color: #ffffff;
+  border-color: #ffffff;
 }
 </style>

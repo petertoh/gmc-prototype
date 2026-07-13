@@ -138,6 +138,7 @@ export const projectsNetworkQuery = defineQuery(`{
           dimensions,
           artist[]->{
             _key,
+            _type,
             name,
             "slug": slug.current,
             role,

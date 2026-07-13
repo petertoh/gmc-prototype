@@ -16,32 +16,36 @@ const tree = computed(() => {
   <nav v-if="data && tree?.length">
     <ul>
       <li v-for="category in tree" :key="category.slug">
-        <BaseNode
-          :link="{ to: `?category=${category.slug}` }"
-          :node-type="category._type"
-          >{{ category.name }}</BaseNode
+        <div
+          :class="{ 'node-selected': $route.query.category === category.slug }"
         >
+          <BaseNode
+            :link="{ to: `?category=${category.slug}` }"
+            :node-type="category._type"
+            >{{ category.name }}</BaseNode
+          >
+        </div>
         <ul v-if="category.projects?.length">
           <li v-for="project in category.projects" :key="project._id">
-            <WorkCard :work="project" sub-path="projects" />
+            <WorkCard :work="project" :inline="true" />
 
             <ul v-if="project.works?.length">
               <li v-for="work in project.works" :key="work._id">
-                <WorkCard :work="work" sub-path="work" />
+                <WorkCard :work="work" :inline="true" />
 
                 <ul v-if="work.related?.length">
                   <li
                     v-for="relatedWork in work.related"
                     :key="relatedWork._id"
                   >
-                    <WorkCard :work="relatedWork" sub-path="related" />
+                    <WorkCard :work="relatedWork" :inline="true" />
                   </li>
                 </ul>
               </li>
             </ul>
             <ul v-if="project.related?.length">
               <li v-for="relatedWork in project.related" :key="relatedWork._id">
-                <WorkCard :work="relatedWork" sub-path="related" />
+                <WorkCard :work="relatedWork" :inline="true" />
               </li>
             </ul>
           </li>
