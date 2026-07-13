@@ -49,6 +49,8 @@ watch(
       label = 'Form: ' + workFormTitle
     } else if (queryType === 'year') {
       label = 'Year: ' + label
+    } else if (queryType === 'years') {
+      label = 'Years: ' + label
     }
     // Update breadcrumbs based on the new query
     breadcrumbs.value = [
@@ -66,9 +68,11 @@ watch(
   <div class="layout">
     <header class="layout__header">
       <!-- <h1>GMC Prototype</h1> -->
-      <nav>
-        <NuxtLink to="/">Tree</NuxtLink>
-        <NuxtLink to="/constellation">Constellation</NuxtLink>
+      <nav class="layout__header-links">
+        <NuxtLink to="/" class="layout__header-link">Tree</NuxtLink>/
+        <NuxtLink to="/constellation" class="layout__header-link"
+          >Constellation</NuxtLink
+        >
       </nav>
       <nav class="layout__breadcrumbs">
         <template v-for="(breadcrumb, i) in breadcrumbs" :key="i">
@@ -101,11 +105,24 @@ watch(
   grid-template-columns: 1fr 30rem;
   grid-template-rows: auto 1fr;
   height: 100vh;
+  padding: 1rem;
 }
 .layout__header {
   grid-area: header;
   display: flex;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid;
+}
+
+.layout__header-links {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.layout__header-link {
+  &.router-link-exact-active {
+    color: blue;
+  }
 }
 
 .layout__breadcrumbs {
@@ -114,7 +131,6 @@ watch(
   align-items: center;
   gap: 0.5em;
   overflow-x: auto;
-  padding: 0.25em;
   position: relative;
   flex: 1;
   &:after {
@@ -148,6 +164,7 @@ watch(
 .layout__content {
   grid-area: content;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .layout__sidebar {
@@ -164,7 +181,7 @@ watch(
 
 nav {
   display: flex;
-  margin: 0.25rem;
+  /* margin: 0.25rem 0 0.25rem calc(0rem - 0.25rem); */
 }
 a {
   text-decoration: none;

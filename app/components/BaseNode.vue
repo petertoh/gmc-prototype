@@ -5,7 +5,7 @@
     :class="[
       `node--${nodeType}`,
       {
-        't-label': !['category', 'project', 'work', 'year'].includes(nodeType),
+        't-label': !['category', 'project', 'work'].includes(nodeType),
       },
     ]"
   >
@@ -24,7 +24,9 @@ const props = defineProps<{
 .node {
   display: inline-block;
   color: black;
-  white-space: nowrap;
+  padding: 0 0.25em;
+  border: 1px solid;
+  margin: 0.25em;
   &:hover,
   .node-selected & {
     background-color: blue;
@@ -45,11 +47,13 @@ const props = defineProps<{
 .node--work {
   background-color: rgb(247, 247, 255);
 }
-.node--relatedProject {
+.node--relatedProject,
+.node--event {
   background-color: #ffe7e7;
   border-color: #ffe7e7;
 }
-.node--year {
+.node--year,
+.node--eventType {
   background-color: #e8e8e8;
   border-color: #e8e8e8;
   /* border-radius: 0.5em; */
@@ -62,7 +66,7 @@ const props = defineProps<{
 }
 .node--workMedium {
   color: rgb(119, 119, 119);
-  border-color: rgb(119, 119, 119);
+  border-color: #ffffff;
   /* border-radius: 0.5em; */
 }
 .node--artist {

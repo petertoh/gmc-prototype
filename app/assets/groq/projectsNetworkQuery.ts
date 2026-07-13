@@ -8,7 +8,20 @@ export const projectsNetworkQuery = defineQuery(`{
       _type,
       name,
       "slug": slug.current,
-      description
+      description,
+      image{
+        asset->{
+          _id,
+          url,
+          metadata{
+            dimensions{
+              width,
+              height
+            }
+          }
+        },
+        caption
+      }
     },
     "projects": *[_type == "project"]{    
       _id,
@@ -33,14 +46,16 @@ export const projectsNetworkQuery = defineQuery(`{
               height
             }
           }
-        }
+        },
+        caption
       },
       description,
       workForm[]->{
         _id,
         _type,
         name,
-        "slug": slug.current
+        "slug": slug.current,
+        description
       },
       medium[]->{
         _id,
@@ -79,14 +94,16 @@ export const projectsNetworkQuery = defineQuery(`{
                 height
               }
             }
-          }
+          },
+          caption
         },
         description,
         workForm[]->{
           _id,
           _type,
           name,
-          "slug": slug.current
+          "slug": slug.current,
+          description
         },
         medium[]->{
           _id,
@@ -102,6 +119,7 @@ export const projectsNetworkQuery = defineQuery(`{
         _type,
         title,
         "slug": slug.current,
+        eventType,
         dates{
           dateFormat,
           startYear,
@@ -120,14 +138,16 @@ export const projectsNetworkQuery = defineQuery(`{
                 height
               }
             }
-          }
+          },
+          caption
         },
         description,
         workForm[]->{
             _id,
             _type,
             name,
-            "slug": slug.current
+            "slug": slug.current,
+            description
           },
           medium[]->{
             _id,
@@ -152,6 +172,7 @@ export const projectsNetworkQuery = defineQuery(`{
         _type,
         title,
         "slug": slug.current,
+        eventType,
         dates{
           dateFormat,
           startYear,
@@ -170,14 +191,16 @@ export const projectsNetworkQuery = defineQuery(`{
                 height
               }
             }
-          }
+          },
+          caption
         },
         description,
         workForm[]->{
           _id,
           _type,
           name,
-          "slug": slug.current
+          "slug": slug.current,
+          description
         },
         medium[]->{
           _id,

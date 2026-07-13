@@ -139,6 +139,7 @@ const activeCategories = ref<string[]>([]) // slugs
 const activeProjects = ref<string[]>([]) // slugs
 const activeWorks = ref<string[]>([]) // slugs
 const activeRelatedWorks = ref<string[]>([]) // slugs
+const activeEvents = ref<string[]>([]) // slugs
 const activeYears = ref<number[]>([]) // years
 const activeWorkForms = ref<string[]>([]) // slugs
 
@@ -271,6 +272,7 @@ async function filterActiveItems(newQuery: {
   project?: string
   work?: string
   related?: string
+  event?: string
   year?: string
   workForm?: string
 }) {
@@ -282,7 +284,9 @@ async function filterActiveItems(newQuery: {
   } else if (typeof newQuery.work === 'string') {
     filterByWork(newQuery.work)
   } else if (typeof newQuery.related === 'string') {
-    filterByRelated(newQuery.related)
+    filterByRelated(newQuery.related, 'relatedProject')
+  } else if (typeof newQuery.event === 'string') {
+    filterByRelated(newQuery.event, 'event')
   } else if (typeof newQuery.year === 'string') {
     filterByYear(newQuery.year)
   } else if (typeof newQuery.workForm === 'string') {
@@ -341,14 +345,9 @@ function filterByCategory(categorySlug: string) {
 
   // set state for all active nodes
   activeProjects.value = projectsToActivate.map((project) => project.slug)
-  // activeWorks.value = worksToActivate
-  //   .map((work) => work?.slug || '')
-  //   .filter((slug) => slug)
   activeWorks.value = []
-  // activeRelatedWorks.value = relatedWorksToActivate
-  //   .map((work) => work?.slug || '')
-  //   .filter((slug) => slug)
   activeRelatedWorks.value = []
+  activeEvents.value = []
   activeYears.value = yearsToActivate
   activeWorkForms.value = workFormsToActivate
 }
@@ -365,8 +364,13 @@ function filterByProject(projectSlug: string) {
   const worksToActivate = projectToActivate.works || []
 
   const relatedWorksToActivate = [
-    ...(projectToActivate.related || []),
+    ...(projectToActivate.related?.filter(
+      (w) => w._type === 'relatedProject',
+    ) || []),
     // ...worksToActivate?.flatMap((work) => work.related || []),
+  ]
+  const eventsToActivate = [
+    ...(projectToActivate.related?.filter((w) => w._type === 'event') || []),
   ]
 
   const yearsToActivate = Array.from(
@@ -376,6 +380,9 @@ function filterByProject(projectSlug: string) {
         []),
       ...(relatedWorksToActivate?.flatMap(
         (work) => getWorkYears(work.dates) || [],
+      ) || []),
+      ...(eventsToActivate?.flatMap(
+        (event) => getWorkYears(event.dates) || [],
       ) || []),
     ]),
   )
@@ -394,6 +401,8 @@ function filterByProject(projectSlug: string) {
   activeWorks.value = worksToActivate.map((work) => work.slug) || []
   activeRelatedWorks.value =
     Array.from(new Set(relatedWorksToActivate.map((work) => work.slug))) || []
+  activeEvents.value =
+    Array.from(new Set(eventsToActivate.map((work) => work.slug))) || []
   activeYears.value = yearsToActivate
   activeWorkForms.value = workFormsToActivate
 
@@ -409,7 +418,10 @@ function filterByWork(workSlug: string) {
   activeWorks.value = [workSlug]
 
   // first go down the tree
-  const relatedWorksToActivate = work.related?.filter((w) => !!w?.slug) || []
+  const relatedWorksToActivate =
+    work.related?.filter((w) => !!w?.slug && w._type === 'relatedProject') || []
+  const relatedEventsToActivate =
+    work.related?.filter((w) => !!w?.slug && w._type === 'event') || []
 
   const yearsToActivate = Array.from(
     new Set([
@@ -430,6 +442,7 @@ function filterByWork(workSlug: string) {
   )
 
   activeRelatedWorks.value = relatedWorksToActivate.map((w) => w?.slug) || []
+  activeEvents.value = relatedEventsToActivate.map((w) => w?.slug) || []
   activeYears.value = yearsToActivate
   activeWorkForms.value = workFormsToActivate
 
@@ -444,11 +457,20 @@ function filterByWork(workSlug: string) {
     parentProjects.flatMap((p) => p.category || []).map((cat) => cat.slug) || []
 }
 
-function filterByRelated(relatedSlug: string) {
-  const relatedWork = relatedWorks?.value?.find((w) => w.slug === relatedSlug)
+function filterByRelated(
+  relatedSlug: string,
+  type: 'relatedProject' | 'event' = 'relatedProject',
+) {
+  const relatedWork = relatedWorks?.value?.find(
+    (w) => w.slug === relatedSlug && w._type === type,
+  )
   if (!relatedWork) return
 
-  activeRelatedWorks.value = [relatedSlug]
+  if (type === 'event') {
+    activeEvents.value = [relatedSlug]
+  } else {
+    activeRelatedWorks.value = [relatedSlug]
+  }
 
   // first go down the tree
   activeYears.value = getWorkYears(relatedWork.dates) || []
@@ -484,8 +506,15 @@ function filterByYear(year: string) {
 
   // go up the tree
   const relatedWorksToActivate =
-    relatedWorks?.value?.filter((w) =>
-      getWorkYears(w.dates)?.includes(yearToActivate),
+    relatedWorks?.value?.filter(
+      (w) =>
+        w._type === 'relatedProject' &&
+        getWorkYears(w.dates)?.includes(yearToActivate),
+    ) || []
+  const relatedEventsToActivate =
+    relatedWorks?.value?.filter(
+      (w) =>
+        w._type === 'event' && getWorkYears(w.dates)?.includes(yearToActivate),
     ) || []
   const worksToActivate =
     works?.value?.filter(
@@ -494,7 +523,8 @@ function filterByYear(year: string) {
         w.related?.some(
           (rw) =>
             rw?.slug &&
-            relatedWorksToActivate.some((rwa) => rwa.slug === rw.slug),
+            (relatedWorksToActivate.some((rwa) => rwa.slug === rw.slug) ||
+              relatedEventsToActivate.some((rwa) => rwa.slug === rw.slug)),
         ),
     ) || []
   const projectsToActivate =
@@ -507,7 +537,8 @@ function filterByYear(year: string) {
         p.related?.some(
           (rw) =>
             rw?.slug &&
-            relatedWorksToActivate.some((rwa) => rwa.slug === rw.slug),
+            (relatedWorksToActivate.some((rwa) => rwa.slug === rw.slug) ||
+              relatedEventsToActivate.some((rwa) => rwa.slug === rw.slug)),
         ),
     ) || []
   const categoriesToActivate =
@@ -518,11 +549,15 @@ function filterByYear(year: string) {
     ) || []
 
   activeRelatedWorks.value = relatedWorksToActivate?.map((w) => w.slug) || []
+  activeEvents.value = relatedEventsToActivate?.map((w) => w.slug) || []
   activeWorks.value = worksToActivate?.map((w) => w.slug) || []
   activeProjects.value = projectsToActivate?.map((p) => p.slug) || []
   activeCategories.value = categoriesToActivate?.map((c) => c.slug) || []
   activeWorkForms.value = [
     ...(relatedWorksToActivate?.flatMap(
+      (w) => w.workForm?.map((form) => form.slug) || [],
+    ) || []),
+    ...(relatedEventsToActivate?.flatMap(
       (w) => w.workForm?.map((form) => form.slug) || [],
     ) || []),
     ...(worksToActivate?.flatMap(
@@ -586,6 +621,7 @@ function filterByWorkForm(workForm: string) {
       )
       ?.map((c) => c.slug) || []
   activeRelatedWorks.value = relatedWorksToActivate?.map((w) => w.slug) || []
+  activeEvents.value = []
   activeWorks.value = worksToActivate?.map((w) => w.slug) || []
   activeProjects.value = projectsToActivate?.map((p) => p.slug) || []
   activeYears.value = yearsToActivate?.map((y) => y) || []
@@ -680,6 +716,8 @@ async function initConstellation() {
               nodeData.works?.some((work) => work._id === nData._id)) ||
             (nData._type === 'relatedProject' &&
               nodeData.related?.some((related) => related._id === nData._id)) ||
+            (nData._type === 'event' &&
+              nodeData.related?.some((event) => event._id === nData._id)) ||
             (nData._type === 'workForm' &&
               nodeData.workForm?.some((form) => form._id === nData._id)) ||
             (nData._type === 'year' &&
@@ -699,6 +737,8 @@ async function initConstellation() {
               nodeData.workForm?.some((form) => form._id === nData._id)) ||
             (nData._type === 'relatedProject' &&
               nodeData.related?.some((related) => related._id === nData._id)) ||
+            (nData._type === 'event' &&
+              nodeData.related?.some((event) => event._id === nData._id)) ||
             (nData._type === 'year' &&
               getWorkYears(nodeData.dates).includes(nData.year))
           )
@@ -708,7 +748,7 @@ async function initConstellation() {
         targetNodes.forEach((node) => {
           addRelationship(nodeData, x, y, node)
         })
-      } else if (nodeData._type === 'relatedProject') {
+      } else if (['relatedProject', 'event'].includes(nodeData._type)) {
         const targetNodes = nodes.filter((n) => {
           const nData = JSON.parse(n.getAttribute('data-node') || '{}')
           return (
@@ -736,6 +776,7 @@ function resetActiveSelections() {
   activeProjects.value = []
   activeWorks.value = []
   activeRelatedWorks.value = []
+  activeEvents.value = []
   activeYears.value = []
   activeWorkForms.value = []
   activeRelationships.value = []
@@ -747,6 +788,7 @@ function updateActiveRelationships() {
     !activeProjects.value.length &&
     !activeWorks.value.length &&
     !activeRelatedWorks.value.length &&
+    !activeEvents.value.length &&
     !activeYears.value.length &&
     !activeWorkForms.value.length
   ) {
@@ -777,6 +819,8 @@ function updateActiveRelationships() {
       const projectToRelatedProject =
         rel.to._type === 'relatedProject' &&
         activeRelatedWorks.value.includes(rel.to.slug)
+      const projectToEvent =
+        rel.to._type === 'event' && activeEvents.value.includes(rel.to.slug)
       const projectToWorkForm =
         rel.to._type === 'workForm' &&
         activeWorkForms.value.includes(rel.to.slug)
@@ -786,6 +830,7 @@ function updateActiveRelationships() {
       return (
         projectToWork ||
         projectToRelatedProject ||
+        projectToEvent ||
         projectToWorkForm ||
         projectToYear
       )
@@ -802,6 +847,8 @@ function updateActiveRelationships() {
       const workToRelatedProject =
         rel.to._type === 'relatedProject' &&
         activeRelatedWorks.value.includes(rel.to.slug)
+      const workToEvent =
+        rel.to._type === 'event' && activeEvents.value.includes(rel.to.slug)
       const workToYear =
         rel.to._type === 'year' &&
         activeYears.value.includes(parseInt(rel.to.slug))
@@ -831,6 +878,19 @@ function updateActiveRelationships() {
       newActiveRelationships.push(...activeRelationships)
     }
   })
+  activeEvents.value.forEach((slug) => {
+    const activeRelationships = relationships.value.filter((rel) => {
+      const isFromEvent = rel.from._type === 'event' && rel.from.slug === slug
+      if (!isFromEvent) return false
+      const eventToYear =
+        rel.to._type === 'year' &&
+        activeYears.value.includes(parseInt(rel.to.slug))
+      return eventToYear
+    })
+    if (activeRelationships.length) {
+      newActiveRelationships.push(...activeRelationships)
+    }
+  })
   activeYears.value.forEach((year) => {
     const activeRelationships = relationships.value.filter((rel) => {
       const isToYear = rel.to._type === 'year' && rel.to.slug === `${year}`
@@ -840,10 +900,17 @@ function updateActiveRelationships() {
       const yearFromRelatedProject =
         rel.from._type === 'relatedProject' &&
         activeRelatedWorks.value.includes(rel.from.slug)
+      const yearFromEvent =
+        rel.from._type === 'event' && activeEvents.value.includes(rel.from.slug)
       const yearFromProject =
         rel.from._type === 'project' &&
         activeProjects.value.includes(rel.from.slug)
-      return yearFromWork || yearFromRelatedProject || yearFromProject
+      return (
+        yearFromWork ||
+        yearFromRelatedProject ||
+        yearFromProject ||
+        yearFromEvent
+      )
     })
     if (activeRelationships.length) {
       newActiveRelationships.push(...activeRelationships)
@@ -859,10 +926,15 @@ function updateActiveRelationships() {
       const workFormFromRelatedProject =
         rel.to._type === 'relatedProject' &&
         activeRelatedWorks.value.includes(rel.to.slug)
+      const workFormFromEvent =
+        rel.to._type === 'event' && activeEvents.value.includes(rel.to.slug)
       const workFormFromProject =
         rel.to._type === 'project' && activeProjects.value.includes(rel.to.slug)
       return (
-        workFormFromWork || workFormFromRelatedProject || workFormFromProject
+        workFormFromWork ||
+        workFormFromRelatedProject ||
+        workFormFromProject ||
+        workFormFromEvent
       )
     })
     if (activeRelationships.length) {
@@ -1030,7 +1102,9 @@ function drawCanvas() {
     </nav>
     <nav v-if="relatedWorks?.length">
       <div
-        v-for="(work, index) in relatedWorks"
+        v-for="(work, index) in relatedWorks.filter(
+          (w) => w._type === 'relatedProject',
+        )"
         :key="work._id"
         class="projects-constellation__node-container"
         :class="{
@@ -1048,6 +1122,29 @@ function drawCanvas() {
         />
         <BaseNode
           :link="{ to: { query: { related: work.slug } } }"
+          :node-type="work._type"
+          >{{ work.title }}</BaseNode
+        >
+      </div>
+      <div
+        v-for="(work, index) in relatedWorks.filter((w) => w._type === 'event')"
+        :key="work._id"
+        class="projects-constellation__node-container"
+        :class="{
+          'node-active': activeEvents.includes(work.slug),
+          'node-selected': $route.query.event === work.slug,
+        }"
+        :style="{
+          transitionDelay: `${index * 0.01}s`,
+        }"
+      >
+        <div
+          class="projects-constellation__node-nucleus"
+          :data-node="JSON.stringify(work)"
+          aria-hidden="true"
+        />
+        <BaseNode
+          :link="{ to: { query: { event: work.slug } } }"
           :node-type="work._type"
           >{{ work.title }}</BaseNode
         >

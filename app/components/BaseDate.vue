@@ -7,9 +7,17 @@ const props = defineProps<{
 const linkToYears = computed(() => {
   if (props.linkToYear && props.date?.startYear) {
     if (!props.date?.endYear) {
-      return `/year/?years=${props.date.startYear.split('-')[0]}`
+      return { query: { year: props.date.startYear.split('-')[0] } }
     } else {
-      return `/year/?years=${props.date.startYear.split('-')[0]}-${props.date.endYear.split('-')[0]}`
+      return {
+        query: {
+          year: `${props.date.startYear.split('-')[0]}-${props.date.endYear.split('-')[0]}`,
+        },
+      }
+    }
+  } else if (props.date?.dateFormat === 'dateTime' && props.date?.startTime) {
+    return {
+      query: { year: props.date.startTime.split('T')[0]?.split('-')[0] },
     }
   }
 })
@@ -26,13 +34,19 @@ const formattedDate = computed(() => {
     }
     return `${startYear}`
   } else if (props.date.dateFormat === 'dateTime' && props.date?.startTime) {
+    const startTimeFormatted = new Date(props.date.startTime).toLocaleString(
+      'en-US',
+      { dateStyle: 'medium', timeStyle: 'short' },
+    )
     if (props.date.onGoing) {
-      return `${props.date.startTime} - Present`
+      return `${startTimeFormatted} - Present`
     }
     if (props.date.endTime) {
-      return `${props.date.startTime} - ${props.date.endTime}`
+      return `${startTimeFormatted} - ${new Date(
+        props.date.endTime,
+      ).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
     }
-    return `${props.date.startTime}`
+    return `${startTimeFormatted}`
   }
 
   return ''
@@ -40,11 +54,7 @@ const formattedDate = computed(() => {
 </script>
 
 <template>
-  <BaseNode
-    v-if="linkToYears"
-    :link="{ to: `?years=${linkToYears}` }"
-    node-type="year"
-  >
+  <BaseNode v-if="linkToYears" :link="{ to: linkToYears }" node-type="year">
     <span>{{ formattedDate }}</span>
   </BaseNode>
   <span v-else>{{ formattedDate }}</span>

@@ -1,30 +1,18 @@
 <template>
   <article class="work-card" :class="{ inline: inline }">
-    <div v-if="!inline && work.media?.length" class="work-card__image">
-      <SanityImage
-        v-if="work.media?.length"
-        :asset-id="work.media?.[0]?.asset?._id"
-        w="600"
-        auto="format"
-      />
-    </div>
+    <BaseFigure v-if="!inline && work.media?.length" :image="work.media?.[0]" />
     <h3 :class="{ 'node-selected': $route.query[work._type] === work.slug }">
       <BaseNode
-        :link="{ to: `?${work._type}=${work.slug}` }"
+        :link="{
+          to: `?${work._type === 'relatedProject' ? 'related' : work._type}=${work.slug}`,
+        }"
         :node-type="work._type"
         >{{ work.title }}</BaseNode
       >
     </h3>
-    <div v-if="!inline && work.artist?.length" class="work-card__artist">
-      <BaseNode
-        v-for="artist in work.artist"
-        :key="artist._id"
-        :link="{ to: `?artist=${artist.slug}` }"
-        node-type="artist"
-        >{{ artist.name }}</BaseNode
-      >
-    </div>
+
     <BaseDate v-if="work.dates" :date="work.dates" :link-to-year="true" />
+
     <template v-if="work.workForm?.length">
       <BaseNode
         v-for="form in work.workForm"
@@ -34,6 +22,25 @@
         >{{ form.name }}</BaseNode
       >
     </template>
+
+    <div v-if="work.artist?.length" class="work-card__artist">
+      <BaseNode
+        v-for="artist in work.artist"
+        :key="artist._id"
+        :link="{ to: `?artist=${artist.slug}` }"
+        node-type="artist"
+        >{{ artist.name }}</BaseNode
+      >
+    </div>
+
+    <div v-if="work._type === 'event'">
+      <BaseNode
+        :link="{ to: `?eventType=${work.eventType}` }"
+        node-type="eventType"
+        >{{ work.eventType }}</BaseNode
+      >
+    </div>
+
     <template v-if="work.medium?.length">
       <BaseNode
         v-for="form in work.medium"
@@ -60,17 +67,33 @@ const props = defineProps<{
 <style scoped>
 .work-card.inline {
   display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
-.work-card__image {
-  margin-bottom: 1rem;
-  width: 100%;
-  img {
+
+.work-card__description {
+  max-height: 10rem;
+  overflow: hidden;
+  position: relative;
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
     width: 100%;
-    height: auto;
+    height: 2rem;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 1)
+    );
   }
 }
-.work-card__description {
+
+.work-card__artist {
+  opacity: 0.6;
 }
+
 h3 {
   margin: 0;
 }

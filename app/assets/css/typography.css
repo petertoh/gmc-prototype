@@ -22,3 +22,9 @@ a {
   font-family: var(--font-family-main);
   font-weight: 400;
 }
+
+.t-caption {
+  font-family: var(--font-family-sub-capt);
+  font-size: 0.85rem;
+  font-weight: 400;
+}

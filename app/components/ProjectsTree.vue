@@ -54,3 +54,16 @@ const tree = computed(() => {
     </ul>
   </nav>
 </template>
+
+<style scoped>
+ul {
+  list-style: none;
+  padding: 0;
+  li & {
+    padding-left: 4rem;
+  }
+}
+li {
+  padding: 0;
+}
+</style>
